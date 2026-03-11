@@ -6,13 +6,24 @@ import {
   CalendarDays,
   TrendingUp,
   ArrowRight,
+  ArrowUpRight,
+  ArrowDownRight,
+  Minus,
+  Sparkles,
 } from "lucide-react";
 import "./App.css";
 
 type Leader = {
   name: string;
   doors: number;
+  thisWeekDoors: number;
+  lastWeekDoors: number;
+  changePct: number | null;
+  trend: "up" | "down" | "flat" | "new";
+  trendLabel: string;
 };
+
+type MostImproved = Leader | null;
 
 type LeaderboardResponse = {
   weekLabel: string;
@@ -20,9 +31,10 @@ type LeaderboardResponse = {
   goal: number;
   totalDoors: number;
   leaders: Leader[];
+  mostImproved: MostImproved;
 };
 
-const API_URL = "https://script.google.com/macros/s/AKfycbykaWSDmPRUhnobZnEBJn0fBEwv2RPTgn1GmtTJdO4krW6ALD9JilhrjzmQfw7jGiBoww/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbz0qTVLiLQ_05ZVZCYYGWSObprjBl3lNFU_ZVTboaFGk5MnwdoDlRawgaPVEmS86QfMUw/exec";
 const LOGO_URL = "/logo.png";
 const SIGNUP_URL = "https://www.mobilize.us/okdemocrats/event/910434/";
 
@@ -41,10 +53,47 @@ function ordinal(n: number) {
   return `${n}${s[(v - 20) % 10] || s[v] || s[0]}`;
 }
 
+function TrendBadge({ leader }: { leader: Leader }) {
+  if (leader.trend === "up") {
+    return (
+      <div className="trend-badge trend-up">
+        <ArrowUpRight size={14} />
+        <span>{leader.trendLabel}</span>
+      </div>
+    );
+  }
+
+  if (leader.trend === "down") {
+    return (
+      <div className="trend-badge trend-down">
+        <ArrowDownRight size={14} />
+        <span>{leader.trendLabel}</span>
+      </div>
+    );
+  }
+
+  if (leader.trend === "new") {
+    return (
+      <div className="trend-badge trend-new">
+        <Sparkles size={14} />
+        <span>NEW THIS WEEK</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="trend-badge trend-flat">
+      <Minus size={14} />
+      <span>0%</span>
+    </div>
+  );
+}
+
 export default function App() {
   const [data, setData] = useState<LeaderboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState("");
+  const [logoVisible, setLogoVisible] = useState(true);
 
   async function loadLeaderboard() {
     setLoading(true);
@@ -91,14 +140,17 @@ export default function App() {
       <div className="app-container">
         <header className="header">
           <div className="brand">
-            <img
-              src={LOGO_URL}
-              alt="Campaign logo"
-              className="logo"
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-              }}
-            />
+            {logoVisible && (
+              <img
+                src={LOGO_URL}
+                alt="Campaign logo"
+                className="logo"
+                onError={() => {
+                  setLogoVisible(false);
+                }}
+              />
+            )}
+
             <div className="brand-copy">
               <div className="eyebrow">THE KNOCKBOARD</div>
               <h1>Knock doors. Climb ranks.</h1>
@@ -113,8 +165,8 @@ export default function App() {
         {loading && (
           <main className="loading-state">
             <div className="loading-card">
-              <div className="loading-kicker">Pulling lists...</div>
-              <div className="loading-title">Making sure everything is just right!</div>
+              <div className="loading-kicker">Loading leaderboard</div>
+              <div className="loading-title">Pulling the latest door count...</div>
               <div className="loading-bar">
                 <div className="loading-bar-fill" />
               </div>
@@ -151,16 +203,51 @@ export default function App() {
                 <div className="top-three-grid">
                   {topThree.map((person, index) => (
                     <article className={`winner-card winner-${index + 1}`} key={person.name}>
-                      <div className="winner-rank">{ordinal(index + 1)} place</div>
+                      <div className="winner-top">
+                        <div className="winner-rank">{ordinal(index + 1)} place</div>
+                        <TrendBadge leader={person} />
+                      </div>
+
                       <div className="winner-name">{person.name}</div>
+
                       <div className="winner-doors">
                         {person.doors}
-                        <span>doors</span>
+                        <span>doors total</span>
+                      </div>
+
+                      <div className="winner-weekly-meta">
+                        {person.thisWeekDoors} this week
                       </div>
                     </article>
                   ))}
                 </div>
               </div>
+
+              {data.mostImproved && (
+                <div className="panel most-improved-panel">
+                  <div className="section-title">
+                    <Sparkles size={18} />
+                    <span>Most improved this week</span>
+                  </div>
+
+                  <div className="most-improved-card">
+                    <div>
+                      <div className="most-improved-kicker">Biggest week-over-week jump</div>
+                      <div className="most-improved-name">{data.mostImproved.name}</div>
+                      <div className="most-improved-meta">
+                        {data.mostImproved.thisWeekDoors} this week
+                        {data.mostImproved.lastWeekDoors > 0 && (
+                          <> · {data.mostImproved.lastWeekDoors} last week</>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="most-improved-trend-wrap">
+                      <TrendBadge leader={data.mostImproved} />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="panel">
                 <div className="section-title">
@@ -168,27 +255,38 @@ export default function App() {
                   <span>Full rankings</span>
                 </div>
 
-                <div className="rankings-list">
-                  {rest.map((person, index) => {
-                    const rank = index + 4;
-                    return (
-                      <div className="rank-row" key={person.name}>
-                        <div className="rank-left">
-                          <div className="rank-number">#{rank}</div>
-                          <div>
-                            <div className="rank-name">{person.name}</div>
-                            <div className="rank-meta">Cumulative total</div>
+                {rest.length === 0 ? (
+                  <div className="empty-rankings">
+                    No additional rankings yet.
+                  </div>
+                ) : (
+                  <div className="rankings-list">
+                    {rest.map((person, index) => {
+                      const rank = index + 4;
+                      return (
+                        <div className="rank-row" key={person.name}>
+                          <div className="rank-left">
+                            <div className="rank-number">#{rank}</div>
+                            <div>
+                              <div className="rank-name">{person.name}</div>
+                              <div className="rank-meta">
+                                {person.thisWeekDoors} this week
+                                {person.lastWeekDoors > 0 && <> · {person.lastWeekDoors} last week</>}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="rank-right">
+                            <div className="rank-doors">{person.doors}</div>
+                            <div className="rank-trend-row">
+                              <TrendBadge leader={person} />
+                            </div>
                           </div>
                         </div>
-
-                        <div className="rank-right">
-                          <div className="rank-doors">{person.doors}</div>
-                          <div className="rank-meta">doors</div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </section>
 
@@ -250,8 +348,12 @@ export default function App() {
                 rel="noreferrer"
               >
                 <div className="signup-kicker">Help us crush the goal</div>
+                <div className="signup-title">Join an upcoming canvass</div>
+                <div className="signup-copy">
+                  Step onto a turf, knock some doors, and get your name onto the board.
+                </div>
                 <div className="signup-link">
-                  Sign Up!
+                  Sign up now
                   <ArrowRight size={16} />
                 </div>
               </a>
