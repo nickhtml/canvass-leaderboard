@@ -113,8 +113,8 @@ export default function App() {
         {loading && (
           <main className="loading-state">
             <div className="loading-card">
-              <div className="loading-kicker">Loading leaderboard</div>
-              <div className="loading-title">Pulling the latest door count…</div>
+              <div className="loading-kicker">Pulling lists...</div>
+              <div className="loading-title">Making sure everything is just right!</div>
               <div className="loading-bar">
                 <div className="loading-bar-fill" />
               </div>
@@ -250,12 +250,8 @@ export default function App() {
                 rel="noreferrer"
               >
                 <div className="signup-kicker">Help us crush the goal</div>
-                <div className="signup-title">Join an upcoming canvass</div>
-                <div className="signup-copy">
-                  Step onto a turf, knock some doors, and get your name onto the board.
-                </div>
                 <div className="signup-link">
-                  Sign up now
+                  Sign Up!
                   <ArrowRight size={16} />
                 </div>
               </a>
