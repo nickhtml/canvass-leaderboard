@@ -34,7 +34,7 @@ type LeaderboardResponse = {
   mostImproved: MostImproved;
 };
 
-const API_URL = "https://script.google.com/macros/s/AKfycbz0qTVLiLQ_05ZVZCYYGWSObprjBl3lNFU_ZVTboaFGk5MnwdoDlRawgaPVEmS86QfMUw/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzTsQ4o3wdZDKwbiNHdlJ-LQWq1jBFjKW9rjP0-xA4Tjk7w6LtRrzEEb_b7mqmmgNE1dQ/exec";
 const LOGO_URL = "/logo.png";
 const SIGNUP_URL = "https://www.mobilize.us/okdemocrats/event/910434/";
 
@@ -145,9 +145,7 @@ export default function App() {
                 src={LOGO_URL}
                 alt="Campaign logo"
                 className="logo"
-                onError={() => {
-                  setLogoVisible(false);
-                }}
+                onError={() => setLogoVisible(false)}
               />
             )}
 
@@ -217,37 +215,12 @@ export default function App() {
 
                       <div className="winner-weekly-meta">
                         {person.thisWeekDoors} this week
+                        {person.lastWeekDoors > 0 && <> · {person.lastWeekDoors} last week</>}
                       </div>
                     </article>
                   ))}
                 </div>
               </div>
-
-              {data.mostImproved && (
-                <div className="panel most-improved-panel">
-                  <div className="section-title">
-                    <Sparkles size={18} />
-                    <span>Most improved this week</span>
-                  </div>
-
-                  <div className="most-improved-card">
-                    <div>
-                      <div className="most-improved-kicker">Biggest week-over-week jump</div>
-                      <div className="most-improved-name">{data.mostImproved.name}</div>
-                      <div className="most-improved-meta">
-                        {data.mostImproved.thisWeekDoors} this week
-                        {data.mostImproved.lastWeekDoors > 0 && (
-                          <> · {data.mostImproved.lastWeekDoors} last week</>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="most-improved-trend-wrap">
-                      <TrendBadge leader={data.mostImproved} />
-                    </div>
-                  </div>
-                </div>
-              )}
 
               <div className="panel">
                 <div className="section-title">
@@ -256,9 +229,7 @@ export default function App() {
                 </div>
 
                 {rest.length === 0 ? (
-                  <div className="empty-rankings">
-                    No additional rankings yet.
-                  </div>
+                  <div className="empty-rankings">No additional rankings yet.</div>
                 ) : (
                   <div className="rankings-list">
                     {rest.map((person, index) => {
@@ -288,6 +259,26 @@ export default function App() {
                   </div>
                 )}
               </div>
+
+              {data.mostImproved && (
+                <div className="panel subtle-panel">
+                  <div className="section-title">
+                    <Sparkles size={18} />
+                    <span>Most improved this week</span>
+                  </div>
+
+                  <div className="most-improved-row">
+                    <div>
+                      <div className="most-improved-name">{data.mostImproved.name}</div>
+                      <div className="rank-meta">
+                        {data.mostImproved.thisWeekDoors} this week
+                        {data.mostImproved.lastWeekDoors > 0 && <> · {data.mostImproved.lastWeekDoors} last week</>}
+                      </div>
+                    </div>
+                    <TrendBadge leader={data.mostImproved} />
+                  </div>
+                </div>
+              )}
             </section>
 
             <aside className="right-column">
@@ -347,7 +338,7 @@ export default function App() {
                 target="_blank"
                 rel="noreferrer"
               >
-                <div className="signup-kicker">Help us crush the goal</div>
+                <div className="signup-kicker">Help Us crush the goal</div>
                 <div className="signup-title">Join an upcoming canvass</div>
                 <div className="signup-copy">
                   Step onto a turf, knock some doors, and get your name onto the board.
